@@ -11,9 +11,13 @@ if(WIN32)
 endif()
 
 # Add source to this project's executable.
-add_executable (TCPClientServer "ServerMain.cpp" "SocketVal.h" "ClientSocket.h" "ServerSocket.h" "ClientSocket.cpp" "ServerSocket.cpp")
+
+add_library (TCPClientServerAPI STATIC "ClientSocket.cpp" "ServerSocket.cpp")
 if(WIN32)
-	target_link_libraries(TCPClientServer wsock32 ws2_32)
+	target_link_libraries(TCPClientServerAPI PUBLIC wsock32 ws2_32)
 endif()
+
+add_executable (TCPClientServer "ServerMain.cpp")
+target_link_libraries(TCPClientServer PUBLIC TCPClientServerAPI)
 
 # TODO: Add tests and install targets if needed.
