@@ -12,12 +12,14 @@ endif()
 
 # Add source to this project's executable.
 
-add_library (TCPClientServerAPI STATIC "ClientSocket.cpp" "ServerSocket.cpp")
+add_library (TCPClientServerAPI STATIC "src/Socket.cpp" "src/ServerSocket.cpp" "src/ClientSocket.cpp")
 if(WIN32)
-	target_link_libraries(TCPClientServerAPI PUBLIC wsock32 ws2_32)
+	target_link_libraries(TCPClientServerAPI PRIVATE wsock32 ws2_32)
 endif()
+target_include_directories(TCPClientServerAPI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/" "${CMAKE_CURRENT_SOURCE_DIR}/src/") 
 
-add_executable (TCPClientServer "ServerMain.cpp")
-target_link_libraries(TCPClientServer PUBLIC TCPClientServerAPI)
+add_executable (TCPClientServer "ServerMain.cpp" "include/ClientSocket.h" "src/ClientSocket.cpp")
+target_link_libraries(TCPClientServer PRIVATE TCPClientServerAPI)
+target_include_directories(TCPClientServer PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/") 
 
 # TODO: Add tests and install targets if needed.

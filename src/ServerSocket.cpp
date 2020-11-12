@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <memory.h>
-#include "ClientSocket.h"
+#include "Socket.h"
 
 #if defined(_MSC_VER)
 #include <WS2tcpip.h>
@@ -28,7 +28,9 @@ private:
 	uint32_t getIPlval() const;
 public:
 	ServerSocketImpl();
+	ServerSocketImpl(uint32_t port);
 	ServerSocketImpl(const char* IP);
+	ServerSocketImpl(const char* IP, uint32_t port);
 	~ServerSocketImpl();
 	_SocketVal getNewClient();
 	const char* getIP() const;
@@ -82,7 +84,7 @@ void ServerSocket::ServerSocketImpl::initSocket()
 	hint.sin_family = AF_INET;
 	hint.sin_port = htons(m_Port); //enter desired port
 #if defined(_MSC_VER)
-	hint.sin_addr.S_un.S_addr = getIPlval(); // INADDR_ANY; // Could also use inet_pton
+	hint.sin_addr.S_un.S_addr = getIPlval(); 
 #elif defined(__unix)
 	address.sin_addr.s_addr = m_IP;
 #endif
@@ -98,8 +100,21 @@ ServerSocket::ServerSocketImpl::ServerSocketImpl()
 	initSocket();
 }
 
+ServerSocket::ServerSocketImpl::ServerSocketImpl(uint32_t port) :
+	m_Port{ port }
+{
+	initSocket();
+}
+
 ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP) :
 	m_IP{ IP }
+{
+	initSocket();
+}
+
+ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP, uint32_t port) :
+	m_IP{ IP },
+	m_Port{ port }
 {
 	initSocket();
 }
@@ -168,6 +183,19 @@ ServerSocket::ServerSocket(size_t bufferSize) :
 
 }
 
+ServerSocket::ServerSocket(uint32_t port) :
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(port) }
+{
+
+}
+
+ServerSocket::ServerSocket(size_t bufferSize, uint32_t port) :
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(port) },
+	m_BufferSize{ bufferSize }
+{
+
+}
+
 ServerSocket::ServerSocket(const char* IP) :
 	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP) }
 {
@@ -178,6 +206,19 @@ ServerSocket::ServerSocket(const char* IP, size_t bufferSize) :
 	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP) },
 	m_BufferSize{ bufferSize }
 {
+	std::cout << "1\n";
+}
+
+ServerSocket::ServerSocket(const char* IP, uint32_t port) :
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, port) }
+{
+	std::cout << "2\n";
+}
+
+ServerSocket::ServerSocket(const char* IP, size_t bufferSize, uint32_t port) :
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, port) },
+	m_BufferSize{ bufferSize }
+{
 
 }
 
@@ -186,9 +227,9 @@ ServerSocket::~ServerSocket()
 
 }
 
-ClientSocket ServerSocket::getNewClient()
+Socket ServerSocket::getNewClient()
 {
-	return ClientSocket(m_ServerSocketPimpl->getNewClient(), this);
+	return Socket(m_ServerSocketPimpl->getNewClient(), this);
 }
 
 size_t ServerSocket::getBufferSize() const

@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "ClientSocket.h"
+#include "Socket.h"
+#include "ServerSocket.h"
 #include "string.h"
 
 #if defined(_MSC_VER)
@@ -10,14 +11,14 @@
 
 #endif
 
-ClientSocket::ClientSocket(_SocketVal val, ServerSocket* server) :
+Socket::Socket(_SocketVal val, ServerSocket* server) :
 	m_ClientSocket{ val },
 	m_ServerSocket{ server }
 {
 
 }
 
-ClientSocket::~ClientSocket()
+Socket::~Socket()
 {
 #if defined(_MSC_VER)
 	closesocket(m_ClientSocket);
@@ -26,14 +27,14 @@ ClientSocket::~ClientSocket()
 #endif
 }
 
-ClientSocket& ClientSocket::operator<<(const char* data)
+Socket& Socket::operator<<(const char* data)
 {
 	// Echo message back to client
 	send(m_ClientSocket, data, (int)strlen(data), 0);
 	return *this;
 }
 
-ClientSocket& ClientSocket::operator>>(char* data)
+Socket& Socket::operator>>(char* data)
 {
 	int bytesReceived = recv(m_ClientSocket, data, (int)m_ServerSocket->getBufferSize(), 0);
 	if (bytesReceived == SOCKET_ERROR)
