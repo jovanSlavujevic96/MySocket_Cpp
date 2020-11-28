@@ -6,14 +6,17 @@
 #define IP_ADDR_DELIMITER 4
 #define MAX_IP_NUMBER_LEN 3
 
+#include <iostream>
+#include <memory.h>
+
 #if defined(_MSC_VER)
 #include <WS2tcpip.h>
 #pragma comment (lib, "ws2_32.lib")
 #elif defined(__unix)
-
+#include <sys/socket.h> 
+#include <unistd.h> 
+#include <arpa/inet.h>
 #endif
-
-#include <iostream>
 
 class ClientSocket::ClientSocketImpl
 {
@@ -96,8 +99,8 @@ void ClientSocket::ClientSocketImpl::initSocket()
 
 ClientSocket::ClientSocketImpl::ClientSocketImpl(const char* IP, uint32_t port, _SocketVal* clientSocket) :
 	m_SocketVal{ clientSocket }, 
-	m_IP{ IP != (const char*)NULL ? IP : m_IP },
-	m_Port { port != 0 ? port : m_Port }
+	m_IP{ IP != (const char*)NULL ? IP : DEFAULT_IP_ADDR },
+	m_Port { port != 0 ? port : DEFAULT_PORT_VAL }
 {
 	initSocket();
 }

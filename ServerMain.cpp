@@ -7,10 +7,11 @@
 
 #include "ServerSocket.h"
 #include "Socket.h"
+#include <memory.h>
 
 int main()
 {
-	ServerSocket socket("192.168.0.197", (size_t)BUFFER_SIZE);
+	ServerSocket socket((size_t)BUFFER_SIZE);
 	Socket clientSocket = socket.getNewClient();
 	// While loop: accept and echo message back to client
 	char buf[BUFFER_SIZE];

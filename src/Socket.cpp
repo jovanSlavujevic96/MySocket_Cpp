@@ -9,7 +9,8 @@
 #include <WS2tcpip.h>
 #pragma comment (lib, "ws2_32.lib")
 #elif defined(__unix)
-
+#include <sys/socket.h> 
+#include <unistd.h> 
 #endif
 
 Socket::Socket(_SocketVal val, ServerSocket* server) :

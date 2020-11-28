@@ -1,7 +1,4 @@
-﻿// SocketVal.h : Include file for standard system include files,
-// or project specific include files.
-
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 
@@ -9,6 +6,6 @@
 typedef uint64_t _SocketVal;
 #elif defined(__unix)
 typedef int32_t _SocketVal;
+#define SOCKET_ERROR SO_ERROR
+#define INVALID_SOCKET -1
 #endif 
-
-// TODO: Reference additional headers your program requires here.

@@ -8,7 +8,10 @@
 #include <WS2tcpip.h>
 #pragma comment (lib, "ws2_32.lib")
 #elif defined(__unix)
-
+#include <sys/socket.h> 
+#include <unistd.h> 
+#include <arpa/inet.h>
+#include <netdb.h> 
 #endif
 
 #define IP_ADDR_DELIMITER 4
@@ -94,8 +97,8 @@ void ServerSocket::ServerSocketImpl::initSocket()
 }
 
 ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP, uint32_t port) :
-	m_IP{ IP != NULL ? IP : m_IP },
-	m_Port{ port != 0 ? port : m_Port }
+	m_IP{ IP != NULL ? IP : DEFAULT_IP_ADDR },
+	m_Port{ port != 0 ? port : DEFAULT_PORT_VAL }
 {
 	initSocket();
 }
@@ -119,7 +122,7 @@ _SocketVal ServerSocket::ServerSocketImpl::getNewClient()
 	static sockaddr_in client;
 	static int clientSize = sizeof(client);
 
-	clientSocket = accept(m_ListeningSocket, (sockaddr*)&client, &clientSize);
+	clientSocket = accept(m_ListeningSocket, (sockaddr*)&client, (socklen_t*)&clientSize);
 
 	static char host[NI_MAXHOST];		// Client's remote name
 	static char service[NI_MAXHOST];	// Service (i.e. port) the client is connected on
