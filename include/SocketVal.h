@@ -8,7 +8,7 @@
 #if defined(_MSC_VER)
 typedef uint64_t _SocketVal;
 #elif defined(__unix)
-typedef int64_t _socket;
+typedef int32_t _SocketVal;
 #endif 
 
 // TODO: Reference additional headers your program requires here.

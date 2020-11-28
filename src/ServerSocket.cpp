@@ -27,14 +27,11 @@ private:
 	void initSocket();
 	uint32_t getIPlval() const;
 public:
-	ServerSocketImpl();
-	ServerSocketImpl(uint32_t port);
-	ServerSocketImpl(const char* IP);
 	ServerSocketImpl(const char* IP, uint32_t port);
 	~ServerSocketImpl();
 	_SocketVal getNewClient();
 	const char* getIP() const;
-	uint32_t getPort() const;
+	const uint32_t& getPort() const;
 };
 
 uint32_t ServerSocket::ServerSocketImpl::getIPlval() const
@@ -43,16 +40,17 @@ uint32_t ServerSocket::ServerSocketImpl::getIPlval() const
 	static char currentNumber[MAX_IP_NUMBER_LEN + 1];
 	memset(values, 0, IP_ADDR_DELIMITER);
 	currentNumber[MAX_IP_NUMBER_LEN] = '\0';
+	static uint8_t beginIdx, endIdx;
+	endIdx = 0;
 	for (uint8_t i = 0; i < IP_ADDR_DELIMITER; ++i)
 	{
-		static uint8_t beginIdx, endIdx = 0;
 		for (beginIdx = endIdx = endIdx; m_IP[endIdx] != '.' && endIdx < strlen(m_IP); endIdx++);
 		memset(currentNumber, 0, MAX_IP_NUMBER_LEN);
 		memcpy(currentNumber, m_IP + beginIdx, endIdx - beginIdx);
 		values[i] = atoi(currentNumber);
 		endIdx++;
 	}
-	return  *(uint32_t*)(values);
+	return *(uint32_t*)(values);
 }
 
 void ServerSocket::ServerSocketImpl::initSocket()
@@ -60,10 +58,10 @@ void ServerSocket::ServerSocketImpl::initSocket()
 #if defined(_MSC_VER)
 	{
 		// Initialize winsock
-		WSADATA wsData;
+		WSADATA wsaData;
 		WORD ver = MAKEWORD(2, 2); // 0x0202 // 514
 
-		int wsOk = WSAStartup(ver, &wsData);
+		int wsOk = WSAStartup(ver, &wsaData);
 		if (wsOk != 0)
 		{
 			std::cerr << "Can't Initialize winsock! Quitting!\n";
@@ -75,19 +73,19 @@ void ServerSocket::ServerSocketImpl::initSocket()
 	m_ListeningSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (m_ListeningSocket == INVALID_SOCKET)
 	{
-		std::cerr << "Can't create a socket! Quitting!\n";
+#if defined(_MSC_VER)
+		std::cerr << "socket failed with error: " << WSAGetLastError() << std::endl;
+		WSACleanup();
+#endif
 		std::exit(-1);
 	}
 
 	// Bind the socket to an IP address and port
-	sockaddr_in hint;
+	static sockaddr_in hint;
+	memset(&hint, 0, sizeof(hint));
 	hint.sin_family = AF_INET;
 	hint.sin_port = htons(m_Port); //enter desired port
-#if defined(_MSC_VER)
-	hint.sin_addr.S_un.S_addr = getIPlval(); 
-#elif defined(__unix)
-	address.sin_addr.s_addr = m_IP;
-#endif
+	hint.sin_addr.s_addr = getIPlval();
 
 	bind(m_ListeningSocket, (sockaddr*)&hint, sizeof(hint));
 
@@ -95,26 +93,9 @@ void ServerSocket::ServerSocketImpl::initSocket()
 	listen(m_ListeningSocket, SOMAXCONN);
 }
 
-ServerSocket::ServerSocketImpl::ServerSocketImpl()
-{
-	initSocket();
-}
-
-ServerSocket::ServerSocketImpl::ServerSocketImpl(uint32_t port) :
-	m_Port{ port }
-{
-	initSocket();
-}
-
-ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP) :
-	m_IP{ IP }
-{
-	initSocket();
-}
-
 ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP, uint32_t port) :
-	m_IP{ IP },
-	m_Port{ port }
+	m_IP{ IP != NULL ? IP : m_IP },
+	m_Port{ port != 0 ? port : m_Port }
 {
 	initSocket();
 }
@@ -165,54 +146,54 @@ const char* ServerSocket::ServerSocketImpl::getIP() const
 	return m_IP;
 }
 
-uint32_t ServerSocket::ServerSocketImpl::getPort() const
+const uint32_t& ServerSocket::ServerSocketImpl::getPort() const
 {
 	return m_Port;
 }
 
 ServerSocket::ServerSocket() :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>() }
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, 0) }
 {
 
 }
 
 ServerSocket::ServerSocket(size_t bufferSize) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>() },
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, 0) },
 	m_BufferSize{ bufferSize }
 {
 
 }
 
 ServerSocket::ServerSocket(uint32_t port) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(port) }
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, port) }
 {
 
 }
 
 ServerSocket::ServerSocket(size_t bufferSize, uint32_t port) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(port) },
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, port) },
 	m_BufferSize{ bufferSize }
 {
 
 }
 
 ServerSocket::ServerSocket(const char* IP) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP) }
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, 0) }
 {
 
 }
 
 ServerSocket::ServerSocket(const char* IP, size_t bufferSize) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP) },
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, 0) },
 	m_BufferSize{ bufferSize }
 {
-	std::cout << "1\n";
+
 }
 
 ServerSocket::ServerSocket(const char* IP, uint32_t port) :
 	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, port) }
 {
-	std::cout << "2\n";
+
 }
 
 ServerSocket::ServerSocket(const char* IP, size_t bufferSize, uint32_t port) :

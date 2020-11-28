@@ -18,8 +18,12 @@ if(WIN32)
 endif()
 target_include_directories(TCPClientServerAPI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/" "${CMAKE_CURRENT_SOURCE_DIR}/src/") 
 
-add_executable (TCPClientServer "ServerMain.cpp" "include/ClientSocket.h" "src/ClientSocket.cpp")
-target_link_libraries(TCPClientServer PRIVATE TCPClientServerAPI)
-target_include_directories(TCPClientServer PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/") 
+add_executable (TCPServer "ServerMain.cpp")
+target_link_libraries(TCPServer PRIVATE TCPClientServerAPI)
+target_include_directories(TCPServer PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/") 
+
+add_executable (TCPClient "ClientMain.cpp")
+target_link_libraries(TCPClient PRIVATE TCPClientServerAPI)
+target_include_directories(TCPClient PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/") 
 
 # TODO: Add tests and install targets if needed.
