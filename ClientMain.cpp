@@ -23,13 +23,12 @@ int main()
 		// client to send data
 		socket << msgToSend;
 
-		memset(buf, 0, BUFFER_SIZE);
+		memset(buf, 0, sizeof(buf));
 		socket >> buf;
 		{
 			//buf[bytesReceived] = '\0';
 			std::cout << buf << std::endl;
 		}
-
 	}
 	return 0;
 }

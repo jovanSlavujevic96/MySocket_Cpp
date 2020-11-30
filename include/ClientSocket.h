@@ -7,10 +7,10 @@ class ClientSocket : public Socket
 {
 public:
 	ClientSocket();
-	ClientSocket(const char* IP);
-	ClientSocket(uint32_t port);
 	ClientSocket(size_t bufferSize);
+	ClientSocket(uint32_t port);
 	ClientSocket(size_t bufferSize, uint32_t port);
+	ClientSocket(const char* IP);
 	ClientSocket(const char* IP, uint32_t port);
 	ClientSocket(const char* IP, size_t bufferSize);
 	ClientSocket(const char* IP, size_t bufferSize, uint32_t port);

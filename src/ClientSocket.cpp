@@ -21,15 +21,16 @@
 class ClientSocket::ClientSocketImpl
 {
 private:
-	const char* m_IP = DEFAULT_IP_ADDR;
-	uint32_t m_Port = DEFAULT_PORT_VAL;
+	const char* m_IP;
+	uint32_t m_Port;
 	_SocketVal* m_SocketVal = NULL;
 
 	void initSocket();
 	uint32_t getIPlval() const;
 
 public:
-	ClientSocketImpl(const char* IP, uint32_t port, _SocketVal* clientSocket);
+	explicit ClientSocketImpl() = delete;
+	explicit ClientSocketImpl(const char* IP, uint32_t port, _SocketVal* clientSocket);
 	~ClientSocketImpl();
 
 	const _SocketVal* getSocketVal() const;
@@ -135,13 +136,6 @@ ClientSocket::ClientSocket() :
 
 }
 
-ClientSocket::ClientSocket(const char* IP) :
-	Socket::Socket(0, NULL),
-	m_ClientSocketPimpl{ std::make_unique<ClientSocketImpl>(IP, 0, &m_ClientSocket) }
-{
-
-}
-
 ClientSocket::ClientSocket(uint32_t port) :
 	Socket::Socket(0, NULL),
 	m_ClientSocketPimpl { std::make_unique<ClientSocketImpl>((const char*)NULL, port, &m_ClientSocket) }
@@ -161,6 +155,13 @@ ClientSocket::ClientSocket(size_t bufferSize, uint32_t port) :
 	Socket::Socket(0, NULL),
 	m_ClientSocketPimpl{ std::make_unique<ClientSocketImpl>((const char*)NULL, port, &m_ClientSocket) },
 	m_BufferSize{ bufferSize }
+{
+
+}
+
+ClientSocket::ClientSocket(const char* IP) :
+	Socket::Socket(0, NULL),
+	m_ClientSocketPimpl{ std::make_unique<ClientSocketImpl>(IP, 0, &m_ClientSocket) }
 {
 
 }

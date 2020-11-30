@@ -8,17 +8,19 @@
 #include "ServerSocket.h"
 #include "Socket.h"
 #include <memory.h>
+#include <string>
 
 int main()
 {
 	ServerSocket socket((size_t)BUFFER_SIZE);
-	Socket clientSocket = socket.getNewClient();
+	Socket& clientSocket = *socket.getNewClient();
 	// While loop: accept and echo message back to client
-	char buf[BUFFER_SIZE];
-
+	// char buf[BUFFER_SIZE];
+	std::string buf;
 	while (true)
 	{
-		memset(buf, 0, BUFFER_SIZE);
+		//memset(buf, 0, sizeof(buf));
+		buf.resize(BUFFER_SIZE);
 
 		// Wait for client to send data
 

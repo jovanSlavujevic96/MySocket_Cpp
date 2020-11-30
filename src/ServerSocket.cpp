@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory.h>
+#include <vector>
 #include "Socket.h"
 
 #if defined(_MSC_VER)
@@ -23,20 +24,23 @@
 class ServerSocket::ServerSocketImpl
 {
 private:
+	ServerSocket* m_ServerSocketParent = NULL;
 	_SocketVal m_ListeningSocket;
-	const char* m_IP = DEFAULT_IP_ADDR;
-	uint32_t m_Port = DEFAULT_PORT_VAL;
+	const char* m_IP;
+	uint32_t m_Port;
+	std::vector<std::unique_ptr<Socket>> m_ActiveSockets;
 
 	void initSocket();
 	uint32_t getIPlval() const;
 public:
-	ServerSocketImpl(const char* IP, uint32_t port);
+	explicit ServerSocketImpl() = delete;
+	explicit ServerSocketImpl(const char* IP, uint32_t port, ServerSocket* serverSocket);
 	~ServerSocketImpl();
-	_SocketVal getNewClient();
+	Socket* getNewClient();
 	const char* getIP() const;
 	const uint32_t& getPort() const;
 };
-
+ 
 uint32_t ServerSocket::ServerSocketImpl::getIPlval() const
 {
 	static uint8_t values[IP_ADDR_DELIMITER];
@@ -96,9 +100,10 @@ void ServerSocket::ServerSocketImpl::initSocket()
 	listen(m_ListeningSocket, SOMAXCONN);
 }
 
-ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP, uint32_t port) :
+ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP, uint32_t port, ServerSocket* serverSocket) :
 	m_IP{ IP != NULL ? IP : DEFAULT_IP_ADDR },
-	m_Port{ port != 0 ? port : DEFAULT_PORT_VAL }
+	m_Port{ port != 0 ? port : DEFAULT_PORT_VAL },
+	m_ServerSocketParent{ serverSocket }
 {
 	initSocket();
 }
@@ -114,7 +119,7 @@ ServerSocket::ServerSocketImpl::~ServerSocketImpl()
 #endif
 }
 
-_SocketVal ServerSocket::ServerSocketImpl::getNewClient()
+Socket* ServerSocket::ServerSocketImpl::getNewClient()
 {
 	_SocketVal clientSocket;
 
@@ -141,7 +146,8 @@ _SocketVal ServerSocket::ServerSocketImpl::getNewClient()
 			ntohs(client.sin_port) << std::endl;
 	}
 
-	return clientSocket;
+	m_ActiveSockets.push_back(std::make_unique<Socket>(clientSocket, m_ServerSocketParent));
+	return m_ActiveSockets[m_ActiveSockets.size()-1].get();
 }
 
 const char* ServerSocket::ServerSocketImpl::getIP() const
@@ -155,52 +161,52 @@ const uint32_t& ServerSocket::ServerSocketImpl::getPort() const
 }
 
 ServerSocket::ServerSocket() :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, 0) }
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, 0, this) }
 {
 
 }
 
 ServerSocket::ServerSocket(size_t bufferSize) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, 0) },
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, 0, this) },
 	m_BufferSize{ bufferSize }
 {
 
 }
 
 ServerSocket::ServerSocket(uint32_t port) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, port) }
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, port, this) }
 {
 
 }
 
 ServerSocket::ServerSocket(size_t bufferSize, uint32_t port) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, port) },
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>((const char*)NULL, port, this) },
 	m_BufferSize{ bufferSize }
 {
 
 }
 
 ServerSocket::ServerSocket(const char* IP) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, 0) }
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, 0, this) }
 {
 
 }
 
 ServerSocket::ServerSocket(const char* IP, size_t bufferSize) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, 0) },
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, 0, this) },
 	m_BufferSize{ bufferSize }
 {
 
 }
 
 ServerSocket::ServerSocket(const char* IP, uint32_t port) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, port) }
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, port, this) }
 {
 
 }
 
 ServerSocket::ServerSocket(const char* IP, size_t bufferSize, uint32_t port) :
-	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, port) },
+	m_ServerSocketPimpl{ std::make_unique<ServerSocketImpl>(IP, port, this) },
 	m_BufferSize{ bufferSize }
 {
 
@@ -211,9 +217,9 @@ ServerSocket::~ServerSocket()
 
 }
 
-Socket ServerSocket::getNewClient()
+Socket* ServerSocket::getNewClient()
 {
-	return Socket(m_ServerSocketPimpl->getNewClient(), this);
+	return m_ServerSocketPimpl->getNewClient(); 
 }
 
 size_t ServerSocket::getBufferSize() const

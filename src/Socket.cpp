@@ -1,4 +1,4 @@
-#include <iostream>
+ #include <iostream>
 
 #include "Socket.h"
 #include "ServerSocket.h"
@@ -15,7 +15,7 @@
 
 Socket::Socket(_SocketVal val, ServerSocket* server) :
 	m_ClientSocket{ val },
-	m_ServerSocket{ server }
+	m_ServerSocketParent{ server }
 {
 
 }
@@ -29,26 +29,19 @@ Socket::~Socket()
 #endif
 }
 
-Socket& Socket::operator<<(const char* data)
+void Socket::sendData(const char* data, const _SocketVal& socket)
 {
-	// Echo message back to client
-	send(m_ClientSocket, data, (int)strlen(data), 0);
-	return *this;
+	if (send(socket, data, (int)strlen(data), 0) < 0)
+	{
+		std::cerr << "Error in send(). Quitting\n";
+		std::exit(-1); // TO DO
+	}
 }
 
-Socket& Socket::operator>>(char* data)
+void Socket::receiveData(char* data, int bufferSize, const _SocketVal& socket)
 {
 	static int bytesReceived;
-	if (NULL == m_ServerSocket)
-	{
-		bytesReceived = (int)reinterpret_cast<ClientSocket*>(this)->getBufferSize();
-	}
-	else
-	{
-		bytesReceived = (int)m_ServerSocket->getBufferSize();
-	}
-	bytesReceived = recv(m_ClientSocket, data, bytesReceived, 0);
-	if (bytesReceived == SOCKET_ERROR)
+	if ((bytesReceived = recv(socket, data, bufferSize, 0)) == SOCKET_ERROR)
 	{
 		std::cerr << "Error in recv(). Quitting\n";
 		std::exit(-1); // TO DO
@@ -58,9 +51,46 @@ Socket& Socket::operator>>(char* data)
 		std::cout << "Client disconnected\n";
 		std::exit(-1); // TO DO
 	}
-	/*if (bytesReceived < (int)m_ServerSocket->getBufferSize() && bytesReceived > 0)
+	else if (bytesReceived < bufferSize && bytesReceived > 0)
 	{
 		data[bytesReceived] = '\0';
-	}*/
+	}
+}
+
+Socket& Socket::operator<<(const char* data)
+{
+	sendData(data, m_ClientSocket);
+	return *this;
+}
+
+Socket& Socket::operator<<(const std::string& data)
+{
+	sendData(data.c_str(), m_ClientSocket);
+	return *this;
+}
+
+Socket& Socket::operator>>(char* data)
+{
+	if (NULL == m_ServerSocketParent)
+	{
+		receiveData(data, (int)reinterpret_cast<ClientSocket*>(this)->getBufferSize(), m_ClientSocket);
+	}
+	else
+	{
+		receiveData(data, (int)m_ServerSocketParent->getBufferSize(), m_ClientSocket);
+	}
+	return *this;
+}
+
+Socket& Socket::operator>>(std::string& data)
+{
+	static size_t dataAddr;
+	static char* dataPtr;
+
+	dataAddr = reinterpret_cast<size_t>(data.c_str());
+	dataPtr = reinterpret_cast<char*>(dataAddr);
+
+	receiveData(dataPtr, data.size(), m_ClientSocket);
+
 	return *this;
 }
