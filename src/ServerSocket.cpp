@@ -121,13 +121,20 @@ ServerSocket::ServerSocketImpl::~ServerSocketImpl()
 
 Socket* ServerSocket::ServerSocketImpl::getNewClient()
 {
-	_SocketVal clientSocket;
+	static _SocketVal clientSocket;
 
 	// Wait for a connection
 	static sockaddr_in client;
 	static int clientSize = sizeof(client);
 
+	memset(&client, 0u, clientSize);
+
 	clientSocket = accept(m_ListeningSocket, (sockaddr*)&client, (socklen_t*)&clientSize);
+	if (clientSocket == INVALID_SOCKET)
+	{
+		std::cout << "accept returns bad socket val!\n";
+		std::exit(-1);
+	}
 
 	static char host[NI_MAXHOST];		// Client's remote name
 	static char service[NI_MAXHOST];	// Service (i.e. port) the client is connected on
@@ -217,9 +224,14 @@ ServerSocket::~ServerSocket()
 
 }
 
-Socket* ServerSocket::getNewClient()
+Socket* ServerSocket::getNewClientPtr()
 {
 	return m_ServerSocketPimpl->getNewClient(); 
+}
+
+Socket& ServerSocket::getNewClientRef()
+{
+	return *m_ServerSocketPimpl->getNewClient();
 }
 
 size_t ServerSocket::getBufferSize() const

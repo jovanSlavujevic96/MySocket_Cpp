@@ -18,7 +18,8 @@ public:
 	ServerSocket(const char* IP, size_t bufferSize, uint32_t port);
 	~ServerSocket();
 
-	Socket* getNewClient();
+	Socket* getNewClientPtr();
+	Socket& getNewClientRef();
 	size_t getBufferSize() const; // default 1024b <=> 1kB
 	const char* getIP() const; // default "127.0.0.1"
 	uint32_t getPort() const; // default 54000

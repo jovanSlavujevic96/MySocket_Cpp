@@ -7,30 +7,44 @@
 
 #include "ServerSocket.h"
 #include "Socket.h"
+#include "SocketException.h"
 #include <memory.h>
 #include <string>
 
 int main()
 {
 	ServerSocket socket((size_t)BUFFER_SIZE);
-	Socket& clientSocket = *socket.getNewClient();
+	Socket& clientSocket = socket.getNewClientRef();
 	// While loop: accept and echo message back to client
 	// char buf[BUFFER_SIZE];
 	std::string buf;
+	buf.resize(BUFFER_SIZE);
 	while (true)
 	{
 		//memset(buf, 0, sizeof(buf));
-		buf.resize(BUFFER_SIZE);
+		std::cout << "str buf after resize: " <<  buf << std::endl;
 
 		// Wait for client to send data
-
-		clientSocket >> buf;
+		try
 		{
-			//buf[bytesReceived] = '\0';
-			std::cout << buf << std::endl;
+			clientSocket >> buf;
 		}
-
-		clientSocket << buf;
+		catch (const SocketException& exception)
+		{
+			//std::cout << exception.what() << std::endl;
+			std::wcout << exception.wwhat() << L'\n';
+			std::exit(-1);
+		}
+		std::cout << buf << std::endl;
+		try
+		{
+			clientSocket << buf;
+		}
+		catch (const SocketException& exception)
+		{
+			std::wcout << (const wchar_t*)exception.what() << L'\n';
+			std::exit(-1);
+		}
 	}
 	return 0;
 }

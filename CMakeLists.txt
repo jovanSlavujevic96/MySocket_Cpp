@@ -12,7 +12,7 @@ endif()
 
 # Add source to this project's executable.
 
-add_library (TCPClientServerAPI STATIC "src/Socket.cpp" "src/ServerSocket.cpp" "src/ClientSocket.cpp")
+add_library (TCPClientServerAPI STATIC "src/Socket.cpp" "src/ServerSocket.cpp" "src/ClientSocket.cpp" "src/SocketException.cpp")
 if(WIN32)
 	target_link_libraries(TCPClientServerAPI PRIVATE wsock32 ws2_32)
 endif()

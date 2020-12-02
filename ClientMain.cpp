@@ -6,6 +6,7 @@
 // https://stackoverflow.com/questions/55885656/is-it-possible-to-address-a-server-client-socket-in-an-another-network-c
 
 #include "ClientSocket.h"
+#include "SocketException.h"
 #include <memory.h>
 
 int main()
@@ -21,14 +22,25 @@ int main()
 		std::cin.get();
 
 		// client to send data
-		socket << msgToSend;
-
-		memset(buf, 0, sizeof(buf));
-		socket >> buf;
+		try
 		{
-			//buf[bytesReceived] = '\0';
-			std::cout << buf << std::endl;
+			socket << msgToSend;
 		}
+		catch (const SocketException& exception)
+		{
+			//std::cout << exception.what() << std::endl;
+			std::wcout << exception.wwhat() << L'\n';
+		}
+		memset(buf, 0, sizeof(buf));
+		try
+		{
+			socket >> buf;
+		}
+		catch (const SocketException& exception)
+		{
+			std::wcout << (const wchar_t*)exception.what() << L'\n';
+		}
+		std::cout << buf << std::endl;
 	}
 	return 0;
 }
