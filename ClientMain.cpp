@@ -27,6 +27,7 @@ int main()
 			socket << msgToSend;
 			memset(buf, 0, sizeof(buf));
 			socket >> buf;
+			std::cout << buf << std::endl;
 		}
 		catch (const SocketException& exception)
 		{
@@ -34,7 +35,6 @@ int main()
 			std::wcout << exception.wwhat() << L'\n';
 			std::exit(-1);
 		}
-		std::cout << buf << std::endl;
 	}
 	return 0;
 }

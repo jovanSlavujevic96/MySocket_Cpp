@@ -4,7 +4,6 @@
 #include "ISocket.h"
 #include <string>
 
-
 class ServerSocket;
 
 class Socket : public ISocket
@@ -20,9 +19,9 @@ public:
 	const Socket& operator>>(char* data) const; // get msg from socket
 	const Socket& operator>>(std::string& data) const;
 
-	/*virtual */const uint32_t& getPort() const override;
-	/*virtual */const size_t& getBufferSize() const override;
-	/*virtual */const char* getIP_str() const override;
+	const uint32_t& getPort() const override;
+	const size_t& getBufferSize() const override;
+	const char* getIP_str() const override;
 private:
 	ServerSocket* m_ServerSocketParent = nullptr;
 	

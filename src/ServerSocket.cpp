@@ -4,6 +4,7 @@
 #include <memory.h>
 #include <vector>
 #include "Socket.h"
+#include "SocketException.h"
 
 #if defined(_MSC_VER)
 #include <WS2tcpip.h>
@@ -21,6 +22,18 @@
 #define DEFAULT_IP_ADDR "127.0.0.1"
 #define DEFAULT_PORT_VAL 54000u
 
+#if defined(_MSC_VER)
+static inline const wchar_t* GetWinWStringError(void)
+{
+	wchar_t* wstrError = NULL;
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)&wstrError, 0, NULL);
+	return wstrError;
+}
+#endif
+
 class ServerSocket::ServerSocketImpl
 {
 private:
@@ -28,7 +41,7 @@ private:
 	_SocketVal m_ListeningSocket;
 	const char* m_IP;
 	uint32_t m_Port;
-	std::vector<std::unique_ptr<Socket>> m_ActiveSockets;
+	std::vector<Socket*> m_ActiveSockets;
 
 	void initSocket();
 	uint32_t getIPlval() const;
@@ -36,6 +49,7 @@ public:
 	explicit ServerSocketImpl() = delete;
 	explicit ServerSocketImpl(const char* IP, uint32_t port, ServerSocket* serverSocket);
 	~ServerSocketImpl();
+
 	Socket* getNewClient();
 	const char* getIP() const;
 	const uint32_t& getPort() const;
@@ -71,20 +85,31 @@ void ServerSocket::ServerSocketImpl::initSocket()
 		int wsOk = WSAStartup(ver, &wsaData);
 		if (wsOk != 0)
 		{
-			std::cerr << "Can't Initialize winsock! Quitting!\n";
-			std::exit(-1);
+			const wchar_t* wstrError = GetWinWStringError();
+			throw SocketException(L"WSAStartup() :: Exception on server socket %llu : port %u. Error: %s.", m_ListeningSocket, m_Port, wstrError);
+			if (wstrError != (const wchar_t*)NULL)
+			{
+				free((void*)wstrError);
+			}
+			WSACleanup();
 		}
 	}
 #endif
 	// Create a socket
-	m_ListeningSocket = socket(AF_INET, SOCK_STREAM, 0);
+	m_ListeningSocket = socket(AF_INET, SOCK_STREAM, 0); //IPPROTO_TCP
 	if (m_ListeningSocket == INVALID_SOCKET)
 	{
 #if defined(_MSC_VER)
-		std::cerr << "socket failed with error: " << WSAGetLastError() << std::endl;
+		const wchar_t* wstrError = GetWinWStringError();
+		throw SocketException(L"socket() :: Exception on server socket %llu : port %u. Error: %s.", m_ListeningSocket, m_Port, wstrError);
+		if (wstrError != (const wchar_t*)NULL)
+		{
+			free((void*)wstrError);
+		}
 		WSACleanup();
+#elif defined(__unix)
+		throw SocketException(L"socket() :: Exception on server socket %lld : port %u. Error: %s.", m_ListeningSocket, m_Port, strerror(errno));
 #endif
-		std::exit(-1);
 	}
 
 	// Bind the socket to an IP address and port
@@ -94,10 +119,36 @@ void ServerSocket::ServerSocketImpl::initSocket()
 	hint.sin_port = htons(m_Port); //enter desired port
 	hint.sin_addr.s_addr = getIPlval();
 
-	bind(m_ListeningSocket, (sockaddr*)&hint, sizeof(hint));
+	if (bind(m_ListeningSocket, (sockaddr*)&hint, sizeof(hint)) < 0)
+	{
+#if defined(_MSC_VER)
+		const wchar_t* wstrError = GetWinWStringError();
+		throw SocketException(L"bind() :: Exception on server socket %llu : port %u. Error: %s.", m_ListeningSocket, m_Port, wstrError);
+		if (wstrError != (const wchar_t*)NULL)
+		{
+			free((void*)wstrError);
+		}
+		WSACleanup();
+#elif defined(__unix)
+		throw SocketException(L"bind() :: Exception on server socket %lld : port %u. Error: %s.", m_ListeningSocket, m_Port, strerror(errno));
+#endif
+	}
 
 	// Tell Winsock the socket is for listening
-	listen(m_ListeningSocket, SOMAXCONN);
+	if (listen(m_ListeningSocket, SOMAXCONN) < 0)
+	{
+#if defined(_MSC_VER)
+		const wchar_t* wstrError = GetWinWStringError();
+		throw SocketException(L"listen() :: Exception on server socket %llu : port %u. Error: %s.", m_ListeningSocket, m_Port, wstrError);
+		if (wstrError != (const wchar_t*)NULL)
+		{
+			free((void*)wstrError);
+		}
+		WSACleanup();
+#elif defined(__unix)
+		throw SocketException(L"listen() :: Exception on server socket %lld : port %u. Error: %s.", m_ListeningSocket, m_Port, strerror(errno));
+#endif
+	}
 }
 
 ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP, uint32_t port, ServerSocket* serverSocket) :
@@ -110,6 +161,10 @@ ServerSocket::ServerSocketImpl::ServerSocketImpl(const char* IP, uint32_t port, 
 
 ServerSocket::ServerSocketImpl::~ServerSocketImpl()
 {
+	for (auto socket : m_ActiveSockets)
+	{
+		delete socket;
+	}
 #if defined(_MSC_VER)
 	// Cleanup winsock
 	WSACleanup();
@@ -132,8 +187,17 @@ Socket* ServerSocket::ServerSocketImpl::getNewClient()
 	clientSocket = accept(m_ListeningSocket, (sockaddr*)&client, (socklen_t*)&clientSize);
 	if (clientSocket == INVALID_SOCKET)
 	{
-		std::cout << "accept returns bad socket val!\n";
-		std::exit(-1);
+#if defined(_MSC_VER)
+		const wchar_t* wstrError = GetWinWStringError();
+		throw SocketException(L"accept() :: Exception on server socket %llu : port %u. Error: %s.", m_ListeningSocket, m_Port, wstrError);
+		if (wstrError != (const wchar_t*)NULL)
+		{
+			free((void*)wstrError);
+		}
+		WSACleanup();
+#elif defined(__unix)
+		throw SocketException(L"accept() :: Exception on server socket %lld : port %u. Error: %s.", m_ListeningSocket, m_Port, strerror(errno));
+#endif
 	}
 
 	static char host[NI_MAXHOST];		// Client's remote name
@@ -153,8 +217,8 @@ Socket* ServerSocket::ServerSocketImpl::getNewClient()
 			ntohs(client.sin_port) << std::endl;
 	}
 
-	m_ActiveSockets.push_back(std::make_unique<Socket>(clientSocket, m_ServerSocketParent));
-	return m_ActiveSockets[m_ActiveSockets.size()-1].get();
+	m_ActiveSockets.push_back(new Socket(clientSocket, m_ServerSocketParent));
+	return m_ActiveSockets[m_ActiveSockets.size()-1];
 }
 
 const char* ServerSocket::ServerSocketImpl::getIP() const

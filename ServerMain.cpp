@@ -25,21 +25,20 @@ int main()
 		try
 		{
 			clientSocket >> buf;
+			std::cout << buf << std::endl;
 		}
 		catch (const SocketException& exception)
 		{
-			//std::cout << exception.what() << std::endl;
 			std::wcout << exception.wwhat() << L'\n';
 			std::exit(-1);
 		}
-		std::cout << buf << std::endl;
 		try
 		{
 			clientSocket << buf;
 		}
 		catch (const SocketException& exception)
 		{
-			std::wcout << (const wchar_t*)exception.wwhat() << L'\n';
+			std::wcout << exception.wwhat() << L'\n';
 			std::exit(-1);
 		}
 	}

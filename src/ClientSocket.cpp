@@ -46,7 +46,6 @@ public:
 	explicit ClientSocketImpl(const char* IP, uint32_t port, const _SocketVal* clientSocket);
 	~ClientSocketImpl();
 
-	const _SocketVal* getSocketVal() const;
 	const char* getIP() const;
 	const uint32_t& getPort() const;
 };
@@ -86,11 +85,12 @@ void ClientSocket::ClientSocketImpl::initSocket()
 		if (wsOk != 0)
 		{
 			const wchar_t* wstrError = GetWinWStringError();
-			throw SocketException(L"Exception on socket %lu. sendData() failed. Error: %s.", socket, wstrError);
+			throw SocketException(L"WSAStartup() :: Exception on client socket %llu : port %u. Error: %s.", *m_SocketVal, m_Port, wstrError);
 			if (wstrError != (const wchar_t*)NULL)
 			{
 				free((void*)wstrError);
 			}
+			WSACleanup();
 		}
 	}
 #endif
@@ -98,10 +98,16 @@ void ClientSocket::ClientSocketImpl::initSocket()
 	*m_SocketVal = socket(AF_INET, SOCK_STREAM, 0);
 	if (*m_SocketVal == INVALID_SOCKET) {
 #if defined(_MSC_VER)
-		std::cerr << "socket failed with error: " << WSAGetLastError() << std::endl;
+		const wchar_t* wstrError = GetWinWStringError();
+		throw SocketException(L"socket() :: Exception on client socket %llu : port %u. Error: %s.", *m_SocketVal, m_Port, wstrError);
+		if (wstrError != (const wchar_t*)NULL)
+		{
+			free((void*)wstrError);
+		}
 		WSACleanup();
+#elif defined(__unix)
+		throw SocketException(L"socket() :: Exception on client socket %lld : port %u. Error: %s.", *m_SocketVal, m_Port, strerror(errno));
 #endif
-		std::exit(-1);
 	}
 	
 	// Bind the socket to an IP address and port
@@ -111,7 +117,20 @@ void ClientSocket::ClientSocketImpl::initSocket()
 	hint.sin_port = htons(m_Port); //enter desired port
 	hint.sin_addr.s_addr = getIPlval();
 
-	connect(*m_SocketVal, (sockaddr*)&hint, sizeof(hint));
+	if (connect(*m_SocketVal, (sockaddr*)&hint, sizeof(hint)) < 0)
+	{
+#if defined(_MSC_VER)
+		const wchar_t* wstrError = GetWinWStringError();
+		throw SocketException(L"connect() :: Exception on client socket %llu : port %u. Error: %s.", *m_SocketVal, m_Port, wstrError);
+		if (wstrError != (const wchar_t*)NULL)
+		{
+			free((void*)wstrError);
+		}
+		WSACleanup();
+#elif defined(__unix)
+		throw SocketException(L"connect() :: Exception on client socket %lld : port %u. Error: %s.", *m_SocketVal, m_Port, strerror(errno));
+#endif
+	}
 }
 
 ClientSocket::ClientSocketImpl::ClientSocketImpl(const char* IP, uint32_t port, const _SocketVal* clientSocket) :
@@ -138,11 +157,6 @@ const char* ClientSocket::ClientSocketImpl::getIP() const
 const uint32_t& ClientSocket::ClientSocketImpl::getPort() const
 {
 	return m_Port;
-}
-
-const _SocketVal* ClientSocket::ClientSocketImpl::getSocketVal() const
-{
-	return m_SocketVal;
 }
 
 ClientSocket::ClientSocket() :
