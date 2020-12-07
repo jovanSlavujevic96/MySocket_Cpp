@@ -95,7 +95,7 @@ void ClientSocket::ClientSocketImpl::initSocket()
 	}
 #endif
 	// Create a SOCKET for connecting to server
-	*m_SocketVal = socket(AF_INET, SOCK_STREAM, 0);
+	*m_SocketVal = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (*m_SocketVal == INVALID_SOCKET) {
 #if defined(_MSC_VER)
 		const wchar_t* wstrError = GetWinWStringError();

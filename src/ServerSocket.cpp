@@ -96,7 +96,7 @@ void ServerSocket::ServerSocketImpl::initSocket()
 	}
 #endif
 	// Create a socket
-	m_ListeningSocket = socket(AF_INET, SOCK_STREAM, 0); //IPPROTO_TCP
+	m_ListeningSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (m_ListeningSocket == INVALID_SOCKET)
 	{
 #if defined(_MSC_VER)

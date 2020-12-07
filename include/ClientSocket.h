@@ -22,5 +22,5 @@ public:
 private:
 	class ClientSocketImpl;
 	std::unique_ptr<ClientSocketImpl> m_ClientSocketPimpl;
-	size_t m_BufferSize = 1024; // 1 kB
+	const size_t m_BufferSize = 1024; // 1 kB
 };

@@ -28,5 +28,5 @@ public:
 private:
 	class ServerSocketImpl;
 	std::unique_ptr<ServerSocketImpl> m_ServerSocketPimpl;
-	size_t m_BufferSize = 1024; // 1 kB
+	const size_t m_BufferSize = 1024; // 1 kB
 };
