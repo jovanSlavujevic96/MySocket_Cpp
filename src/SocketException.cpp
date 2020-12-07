@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <memory.h>
+#include <stdlib.h>
 
 SocketException::SocketException(const wchar_t* exception, ...) :
 	m_Exception { (const wchar_t*)malloc(DEFAULT_WSTRING_SIZE) }
