@@ -10,7 +10,7 @@ public:
 	SocketException(const wchar_t* exception, ...);
 	~SocketException();
 
-	const char* what() const throw () override;	// just notice to use wwhat()
+	const char* what() const throw () override;	
 	const wchar_t* wwhat() const throw();
 private:
 	const wchar_t* m_Exception = NULL;

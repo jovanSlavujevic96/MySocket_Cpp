@@ -1,11 +1,12 @@
 #pragma once
 
 #include "SocketVal.h"
+#include "ISocket.h"
 #include <memory>
 
 class Socket;
 
-class ServerSocket
+class ServerSocket : public ISocket
 {
 public:
 	ServerSocket();
@@ -20,10 +21,10 @@ public:
 
 	Socket* getNewClientPtr();
 	Socket& getNewClientRef();
-	size_t getBufferSize() const; // default 1024b <=> 1kB
-	const char* getIP() const; // default "127.0.0.1"
-	uint32_t getPort() const; // default 54000
 
+	const uint32_t& getPort() const override; // default 54000
+	const size_t& getBufferSize() const override; // default 1024b <=> 1kB
+	const char* getIP_str() const override; // default "127.0.0.1"
 private:
 	class ServerSocketImpl;
 	std::unique_ptr<ServerSocketImpl> m_ServerSocketPimpl;

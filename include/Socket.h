@@ -1,26 +1,33 @@
 #pragma once
 
 #include "SocketVal.h"
+#include "ISocket.h"
 #include <string>
+
 
 class ServerSocket;
 
-class Socket
+class Socket : public ISocket
 {
 public:
 	Socket() = delete;
 	Socket(const Socket& socket) = delete;
 	Socket(_SocketVal val, ServerSocket* server);
-	virtual ~Socket();
+	~Socket();
 
-	static inline void sendData(const char* data, const _SocketVal& socket);
-	static inline void receiveData(char* data, int bufferSize, const _SocketVal& socket);
+	const Socket& operator<<(const char* data) const;// send msg via socket
+	const Socket& operator<<(const std::string& data) const; 
+	const Socket& operator>>(char* data) const; // get msg from socket
+	const Socket& operator>>(std::string& data) const;
 
-	Socket& operator<<(const char* data); // send msg via socket
-	Socket& operator<<(const std::string& data);
-	Socket& operator>>(char* data); // get msg from socket
-	Socket& operator>>(std::string& data);
-protected:
-	_SocketVal m_ClientSocket;
+	/*virtual */const uint32_t& getPort() const override;
+	/*virtual */const size_t& getBufferSize() const override;
+	/*virtual */const char* getIP_str() const override;
+private:
 	ServerSocket* m_ServerSocketParent = nullptr;
+	
+	inline void sendData(const char* data) const;
+	inline void receiveData(char* data) const;
+protected:
+	const _SocketVal m_ClientSocket;
 };

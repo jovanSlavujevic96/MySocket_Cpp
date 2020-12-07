@@ -21,9 +21,6 @@ int main()
 	buf.resize(BUFFER_SIZE);
 	while (true)
 	{
-		//memset(buf, 0, sizeof(buf));
-		std::cout << "str buf after resize: " <<  buf << std::endl;
-
 		// Wait for client to send data
 		try
 		{
@@ -42,7 +39,7 @@ int main()
 		}
 		catch (const SocketException& exception)
 		{
-			std::wcout << (const wchar_t*)exception.what() << L'\n';
+			std::wcout << (const wchar_t*)exception.wwhat() << L'\n';
 			std::exit(-1);
 		}
 	}

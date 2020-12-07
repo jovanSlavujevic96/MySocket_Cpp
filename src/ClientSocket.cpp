@@ -6,8 +6,9 @@
 #define IP_ADDR_DELIMITER 4
 #define MAX_IP_NUMBER_LEN 3
 
-#include <iostream>
 #include <memory.h>
+#include <iostream>
+#include "SocketException.h"
 
 #if defined(_MSC_VER)
 #include <WS2tcpip.h>
@@ -16,6 +17,18 @@
 #include <sys/socket.h> 
 #include <unistd.h> 
 #include <arpa/inet.h>
+#endif
+
+#if defined(_MSC_VER)
+static inline const wchar_t* GetWinWStringError(void)
+{
+	wchar_t* wstrError = NULL;
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)&wstrError, 0, NULL);
+	return wstrError;
+}
 #endif
 
 class ClientSocket::ClientSocketImpl
@@ -30,7 +43,7 @@ private:
 
 public:
 	explicit ClientSocketImpl() = delete;
-	explicit ClientSocketImpl(const char* IP, uint32_t port, _SocketVal* clientSocket);
+	explicit ClientSocketImpl(const char* IP, uint32_t port, const _SocketVal* clientSocket);
 	~ClientSocketImpl();
 
 	const _SocketVal* getSocketVal() const;
@@ -61,8 +74,7 @@ void ClientSocket::ClientSocketImpl::initSocket()
 {
 	if (NULL == m_SocketVal)
 	{
-		std::cerr << "SocketVal ptr is NULL!\n";
-		std::exit(-1);
+		return;
 	}
 #if defined(_MSC_VER)
 	{
@@ -73,8 +85,12 @@ void ClientSocket::ClientSocketImpl::initSocket()
 		int wsOk = WSAStartup(ver, &wsaData);
 		if (wsOk != 0)
 		{
-			std::cerr << "Can't Initialize winsock! Quitting!\n";
-			std::exit(-1);
+			const wchar_t* wstrError = GetWinWStringError();
+			throw SocketException(L"Exception on socket %lu. sendData() failed. Error: %s.", socket, wstrError);
+			if (wstrError != (const wchar_t*)NULL)
+			{
+				free((void*)wstrError);
+			}
 		}
 	}
 #endif
@@ -98,8 +114,8 @@ void ClientSocket::ClientSocketImpl::initSocket()
 	connect(*m_SocketVal, (sockaddr*)&hint, sizeof(hint));
 }
 
-ClientSocket::ClientSocketImpl::ClientSocketImpl(const char* IP, uint32_t port, _SocketVal* clientSocket) :
-	m_SocketVal{ clientSocket }, 
+ClientSocket::ClientSocketImpl::ClientSocketImpl(const char* IP, uint32_t port, const _SocketVal* clientSocket) :
+	m_SocketVal{ (NULL == clientSocket) ? NULL : reinterpret_cast<_SocketVal*>(reinterpret_cast<size_t>(clientSocket)) },
 	m_IP{ IP != (const char*)NULL ? IP : DEFAULT_IP_ADDR },
 	m_Port { port != 0 ? port : DEFAULT_PORT_VAL }
 {
@@ -194,17 +210,17 @@ ClientSocket::~ClientSocket()
 
 }
 
-size_t ClientSocket::getBufferSize() const
+const size_t& ClientSocket::getBufferSize() const
 {
 	return m_BufferSize;
 }
 
-const char* ClientSocket::getIP() const
+const char* ClientSocket::getIP_str() const
 {
 	return m_ClientSocketPimpl->getIP();
 }
 
-uint32_t ClientSocket::getPort() const
+const uint32_t& ClientSocket::getPort() const
 {
 	return m_ClientSocketPimpl->getPort();
 }

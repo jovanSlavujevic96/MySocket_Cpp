@@ -219,10 +219,7 @@ ServerSocket::ServerSocket(const char* IP, size_t bufferSize, uint32_t port) :
 
 }
 
-ServerSocket::~ServerSocket()
-{
-
-}
+ServerSocket::~ServerSocket() = default;
 
 Socket* ServerSocket::getNewClientPtr()
 {
@@ -234,17 +231,18 @@ Socket& ServerSocket::getNewClientRef()
 	return *m_ServerSocketPimpl->getNewClient();
 }
 
-size_t ServerSocket::getBufferSize() const
+const uint32_t& ServerSocket::getPort() const
+{
+	return m_ServerSocketPimpl->getPort();
+}
+
+const size_t& ServerSocket::getBufferSize() const
 {
 	return m_BufferSize;
 }
 
-const char* ServerSocket::getIP() const
+const char* ServerSocket::getIP_str() const
 {
 	return m_ServerSocketPimpl->getIP();
 }
 
-uint32_t ServerSocket::getPort() const
-{
-	return m_ServerSocketPimpl->getPort();
-}

@@ -25,20 +25,14 @@ int main()
 		try
 		{
 			socket << msgToSend;
+			memset(buf, 0, sizeof(buf));
+			socket >> buf;
 		}
 		catch (const SocketException& exception)
 		{
 			//std::cout << exception.what() << std::endl;
 			std::wcout << exception.wwhat() << L'\n';
-		}
-		memset(buf, 0, sizeof(buf));
-		try
-		{
-			socket >> buf;
-		}
-		catch (const SocketException& exception)
-		{
-			std::wcout << (const wchar_t*)exception.what() << L'\n';
+			std::exit(-1);
 		}
 		std::cout << buf << std::endl;
 	}

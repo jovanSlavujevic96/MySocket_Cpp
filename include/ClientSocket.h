@@ -16,10 +16,9 @@ public:
 	ClientSocket(const char* IP, size_t bufferSize, uint32_t port);
 	~ClientSocket();
 
-	size_t getBufferSize() const; // default 1024b <=> 1kB
-	const char* getIP() const; // default "127.0.0.1"
-	uint32_t getPort() const; // default 54000
-
+	const size_t& getBufferSize() const override; // default 1024b <=> 1kB
+	const char* getIP_str() const override; // default "127.0.0.1"
+	const uint32_t& getPort() const override; // default 54000
 private:
 	class ClientSocketImpl;
 	std::unique_ptr<ClientSocketImpl> m_ClientSocketPimpl;

@@ -1,7 +1,7 @@
 #include "SocketException.h"
 
 #define DEFAULT_WSTRING_SIZE 4096u
-#define WHAT_METHOD_MESSAGE "This is just disclaimer to use wwhat() instead of what() method of SocketException"
+#define WHAT_METHOD_MESSAGE "This is just disclaimer to use wwhat() instead of what() method."
 
 #include <stdio.h>
 #include <stdarg.h>
